@@ -20,9 +20,9 @@ class TimetableScrollPhysics extends ScrollPhysics {
     Tolerance tolerance,
     double velocity,
   ) {
-    final pixelsToPage =
-        controller.visibleRange.visibleDays / position.viewportDimension;
-    final currentPage = position.pixels * pixelsToPage;
+    final pixels = position.hasPixels ? position.pixels : 0;
+    final pixelsToPage = position.hasViewportDimension ? controller.visibleRange.visibleDays / position.viewportDimension : 0;
+    final currentPage = pixels * pixelsToPage;
 
     final targetPage = controller.visibleRange.getTargetPageForCurrent(
       currentPage,
@@ -34,20 +34,19 @@ class TimetableScrollPhysics extends ScrollPhysics {
   }
 
   @override
-  Simulation createBallisticSimulation(
-      ScrollMetrics position, double velocity) {
+  Simulation createBallisticSimulation(ScrollMetrics position, double velocity) {
     // If we're out of range and not headed back in range, defer to the parent
     // ballistics, which should put us back in range at a page boundary.
-    if ((velocity <= 0.0 && position.pixels <= position.minScrollExtent) ||
-        (velocity >= 0.0 && position.pixels >= position.maxScrollExtent)) {
+    final pixels = position.hasPixels ? position.pixels : 0;
+    if ((velocity <= 0.0 && pixels <= position.minScrollExtent) || (velocity >= 0.0 && pixels >= position.maxScrollExtent)) {
       return super.createBallisticSimulation(position, velocity);
     }
     final tolerance = this.tolerance;
     final target = _getTargetPixels(position, tolerance, velocity);
-    if (target != position.pixels) {
+    if (target != pixels) {
       return ScrollSpringSimulation(
         spring,
-        position.pixels,
+        pixels,
         target,
         velocity,
         tolerance: tolerance,

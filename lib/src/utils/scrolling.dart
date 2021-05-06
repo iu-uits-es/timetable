@@ -61,8 +61,7 @@ class LinkedScrollControllerGroup {
     _pageNotifier.removeListener(listener);
   }
 
-  Iterable<_LinkedScrollController> get _attachedControllers =>
-      _allControllers.where((controller) => controller.hasClients);
+  Iterable<_LinkedScrollController> get _attachedControllers => _allControllers.where((controller) => controller.hasClients);
 
   /// Animates the scroll position of all linked controllers to [page].
   Future<void> animateTo(
@@ -92,13 +91,12 @@ class LinkedScrollControllerGroup {
 /// A scroll controller that mirrors its movements to a peer, which must also
 /// be a [_LinkedScrollController].
 class _LinkedScrollController extends ScrollController {
-  _LinkedScrollController(this._controllers)
-      : super(initialScrollOffset: _controllers.page);
+  _LinkedScrollController(this._controllers) : super(initialScrollOffset: _controllers.page);
 
   final LinkedScrollControllerGroup _controllers;
 
-  double get page =>
-      offset / (position.viewportDimension * _controllers.viewportFraction);
+  double get viewportDimension => position.hasViewportDimension ? position.viewportDimension : 0;
+  double get page => position.hasPixels ? offset / (viewportDimension * _controllers.viewportFraction) : 0.0;
 
   @override
   void dispose() {
@@ -113,14 +111,12 @@ class _LinkedScrollController extends ScrollController {
         '_LinkedScrollControllers can only be used with'
         ' _LinkedScrollPositions.');
     final _LinkedScrollPosition linkedPosition = position;
-    assert(linkedPosition.owner == this,
-        '_LinkedScrollPosition cannot change controllers once created.');
+    assert(linkedPosition.owner == this, '_LinkedScrollPosition cannot change controllers once created.');
     super.attach(position);
   }
 
   @override
-  _LinkedScrollPosition createScrollPosition(ScrollPhysics physics,
-      ScrollContext context, ScrollPosition oldPosition) {
+  _LinkedScrollPosition createScrollPosition(ScrollPhysics physics, ScrollContext context, ScrollPosition oldPosition) {
     return _LinkedScrollPosition(
       this,
       physics: physics,
@@ -133,16 +129,13 @@ class _LinkedScrollController extends ScrollController {
   @override
   _LinkedScrollPosition get position => super.position;
 
-  Iterable<_LinkedScrollController> get _allPeersWithClients =>
-      _controllers._attachedControllers.where((peer) => peer != this);
+  Iterable<_LinkedScrollController> get _allPeersWithClients => _controllers._attachedControllers.where((peer) => peer != this);
 
   bool get canLinkWithPeers => _allPeersWithClients.isNotEmpty;
 
   Iterable<_LinkedScrollActivity> linkWithPeers(_LinkedScrollPosition driver) {
     assert(canLinkWithPeers);
-    return _allPeersWithClients
-        .map((peer) => peer.link(driver))
-        .expand((e) => e);
+    return _allPeersWithClients.map((peer) => peer.link(driver)).expand((e) => e);
   }
 
   Iterable<_LinkedScrollActivity> link(_LinkedScrollPosition driver) {
@@ -163,8 +156,7 @@ class _LinkedScrollController extends ScrollController {
       animateTo(_pageToOffset(page), curve: curve, duration: duration);
   Future<void> jumpToPage(double page) async => jumpTo(_pageToOffset(page));
 
-  double _pageToOffset(double page) =>
-      page * position.viewportDimension * _controllers.viewportFraction;
+  double _pageToOffset(double page) => page * viewportDimension * _controllers.viewportFraction;
 }
 
 // Implementation details: Whenever position.setPixels or position.forcePixels
@@ -196,15 +188,12 @@ class _LinkedScrollPosition extends ScrollPositionWithSingleContext {
 
   @override
   bool applyViewportDimension(double viewportDimension) {
-    final oldViewportDimension = this.viewportDimension;
+    final oldViewportDimension = hasViewportDimension ? this.viewportDimension : 0.0;
     final result = super.applyViewportDimension(viewportDimension);
-    final oldPixels = pixels;
-    final page = (oldPixels == null || oldViewportDimension == 0.0)
-        ? initialPage
-        : oldPixels /
-            (oldViewportDimension * owner._controllers.viewportFraction);
-    final newPixels =
-        page * viewportDimension * owner._controllers.viewportFraction;
+
+    final oldPixels = hasPixels ? pixels : 0;
+    final page = (oldPixels == null || oldViewportDimension == 0.0) ? initialPage : oldPixels / (oldViewportDimension * owner._controllers.viewportFraction);
+    final newPixels = page * viewportDimension * owner._controllers.viewportFraction;
 
     if (newPixels != oldPixels) {
       correctPixels(newPixels);
@@ -245,12 +234,10 @@ class _LinkedScrollPosition extends ScrollPositionWithSingleContext {
 
   @override
   double setPixels(double newPixels) {
-    if (newPixels == pixels) {
+    if (!hasPixels || newPixels == pixels) {
       return 0;
     }
-    updateUserScrollDirection(newPixels - pixels > 0.0
-        ? ScrollDirection.forward
-        : ScrollDirection.reverse);
+    updateUserScrollDirection(newPixels - pixels > 0.0 ? ScrollDirection.forward : ScrollDirection.reverse);
 
     if (owner.canLinkWithPeers) {
       _peerActivities.addAll(owner.linkWithPeers(this));
@@ -268,12 +255,10 @@ class _LinkedScrollPosition extends ScrollPositionWithSingleContext {
 
   @override
   void forcePixels(double value) {
-    if (value == pixels) {
+    if (!hasPixels || value == pixels) {
       return;
     }
-    updateUserScrollDirection(value - pixels > 0.0
-        ? ScrollDirection.forward
-        : ScrollDirection.reverse);
+    updateUserScrollDirection(value - pixels > 0.0 ? ScrollDirection.forward : ScrollDirection.reverse);
 
     if (owner.canLinkWithPeers) {
       _peerActivities.addAll(owner.linkWithPeers(this));
