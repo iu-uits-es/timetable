@@ -32,8 +32,7 @@ class CurrentTimeIndicatorPainter<E extends Event> extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final dateWidth = size.width / controller.visibleRange.visibleDays;
 
-    final temporalOffset =
-        LocalDate.today().epochDay - controller.scrollControllers.page;
+    final temporalOffset = LocalDate.today().epochDay - controller.scrollControllers.page;
     final left = temporalOffset * dateWidth;
     final right = left + dateWidth;
 
@@ -48,15 +47,14 @@ class CurrentTimeIndicatorPainter<E extends Event> extends CustomPainter {
     final time = LocalTime.currentClockTime().timeSinceMidnight.inSeconds;
     final y = (time / TimeConstants.secondsPerDay) * size.height;
 
-    final radius = lerpDouble(circleRadius, 0, (actualLeft - left) / dateWidth);
+    final radius = lerpDouble(circleRadius, 0, dateWidth != 0 ? (actualLeft - left) / dateWidth : 0);
     canvas
       ..drawCircle(Offset(actualLeft, y), radius, _paint)
-      ..drawLine(
-          Offset(actualLeft + radius, y), Offset(actualRight, y), _paint);
+      ..drawLine(Offset(actualLeft + radius, y), Offset(actualRight, y), _paint);
   }
 
   @override
-  bool shouldRepaint(CurrentTimeIndicatorPainter oldDelegate) =>
-      _paint.color != oldDelegate._paint.color ||
+  bool shouldRepaint(CurrentTimeIndicatorPainter oldDelegate) => //
+      _paint.color != oldDelegate._paint.color || //
       circleRadius != oldDelegate.circleRadius;
 }
