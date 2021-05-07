@@ -38,7 +38,7 @@ class TimetableContent<E extends Event> extends StatelessWidget {
       child: Row(
         children: <Widget>[
           Container(
-            width: hourColumnWidth,
+            width: timetableTheme.hourColumnWidth ?? hourColumnWidth,
             padding: EdgeInsets.only(right: 12),
             child: CustomPaint(
               painter: DateHoursPainter(
@@ -47,6 +47,7 @@ class TimetableContent<E extends Event> extends StatelessWidget {
                       color: context.theme.disabledOnBackground,
                     ),
                 textDirection: context.directionality,
+                formatHour: timetableTheme.formatHour,
               ),
               size: Size.infinite,
             ),
