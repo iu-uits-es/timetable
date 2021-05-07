@@ -1,7 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:time_machine/time_machine.dart' hide Offset;
-import 'package:time_machine/time_machine_text_patterns.dart';
-
 import '../utils/utils.dart';
 
 class DateHoursPainter extends CustomPainter {
@@ -14,15 +11,13 @@ class DateHoursPainter extends CustomPainter {
           for (final h in innerDateHours)
             TextPainter(
               text: TextSpan(
-                text: _pattern.format(LocalTime(h, 0, 0)),
+                text: '$h:00',
                 style: textStyle,
               ),
               textDirection: textDirection,
               textAlign: TextAlign.right,
             ),
         ];
-
-  static final _pattern = LocalTimePattern.createWithCurrentCulture('HH:mm');
 
   final TextStyle textStyle;
   final TextDirection textDirection;
@@ -39,7 +34,7 @@ class DateHoursPainter extends CustomPainter {
       _lastWidth = size.width;
     }
 
-    final hourHeight = size.height / TimeConstants.hoursPerDay;
+    final hourHeight = size.height / 24;
     for (final h in innerDateHours) {
       final painter = _painters[h - 1];
       final y = h * hourHeight - painter.height / 2;
@@ -48,7 +43,5 @@ class DateHoursPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(DateHoursPainter oldDelegate) =>
-      textStyle != oldDelegate.textStyle ||
-      textDirection != oldDelegate.textDirection;
+  bool shouldRepaint(DateHoursPainter oldDelegate) => textStyle != oldDelegate.textStyle || textDirection != oldDelegate.textDirection;
 }

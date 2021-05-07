@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:time_machine/time_machine.dart';
 import 'package:timetable/timetable.dart';
 
 // ignore: unused_import
@@ -9,9 +8,7 @@ import 'utils.dart';
 
 void main() async {
   setTargetPlatformForDesktop();
-
   WidgetsFlutterBinding.ensureInitialized();
-  await TimeMachine.initialize({'rootBundle': rootBundle});
   runApp(ExampleApp(child: TimetableExample()));
 }
 
@@ -30,33 +27,33 @@ class _TimetableExampleState extends State<TimetableExample> {
 
     _controller = TimetableController(
       // A basic EventProvider containing a single event:
-      // eventProvider: EventProvider.list([
-      //   BasicEvent(
-      //     id: 0,
-      //     title: 'My Event',
-      //     color: Colors.blue,
-      //     start: LocalDate.today().at(LocalTime(13, 0, 0)),
-      //     end: LocalDate.today().at(LocalTime(15, 0, 0)),
-      //   ),
-      // ]),
+      eventProvider: EventProvider.list([
+        BasicEvent(
+          id: 0,
+          title: 'My Event',
+          color: Colors.blue,
+          start: DateTime.now().at(TimeOfDay(hour:13, minute:0)),
+          end: DateTime.now().at(TimeOfDay(hour:15, minute:0)),
+        ),
+      ]),
 
       // For a demo of overlapping events, use this one instead:
-      eventProvider: positioningDemoEventProvider,
+      // eventProvider: positioningDemoEventProvider,
 
       // Or even this short example using a Stream:
       // eventProvider: EventProvider.stream(
-      //   eventGetter: (range) => Stream.periodic(
+      //   eventGetter: (range) => Stream.Durationic(
       //     Duration(milliseconds: 16),
       //     (i) {
       //       final start =
-      //           LocalDate.today().atMidnight() + Period(minutes: i * 2);
+      //           DateTime.now().atMidnight().atMidnight() + Duration(minutes: i * 2);
       //       return [
       //         BasicEvent(
       //           id: 0,
       //           title: 'Event',
       //           color: Colors.blue,
       //           start: start,
-      //           end: start + Period(hours: 5),
+      //           end: start + Duration(hours: 5),
       //         ),
       //       ];
       //     },
@@ -65,12 +62,12 @@ class _TimetableExampleState extends State<TimetableExample> {
 
       // Other (optional) parameters:
       initialTimeRange: InitialTimeRange.range(
-        startTime: LocalTime(8, 0, 0),
-        endTime: LocalTime(20, 0, 0),
+        startTime: TimeOfDay(hour:8, minute:0),
+        endTime: TimeOfDay(hour:20, minute:0),
       ),
-      initialDate: LocalDate.today(),
+      initialDate: DateTime.now().atMidnight(),
       visibleRange: VisibleRange.days(3),
-      firstDayOfWeek: DayOfWeek.monday,
+      firstDayOfWeek: DateTime.monday,
     );
   }
 

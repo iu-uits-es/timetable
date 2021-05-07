@@ -2,8 +2,8 @@ import 'dart:ui';
 
 import 'package:collection/collection.dart';
 import 'package:dartx/dartx.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
-import 'package:time_machine/time_machine.dart' hide Offset;
 
 import '../event.dart';
 import '../theme.dart';
@@ -30,18 +30,16 @@ class DateEvents<E extends Event> extends StatelessWidget {
         assert(eventBuilder != null),
         super(key: key);
 
-  static final _defaultMinEventDuration = Period(minutes: 30);
+  static final _defaultMinEventDuration = Duration(minutes: 30);
   static const _defaultMinEventHeight = 16.0;
   static const _defaultEventSpacing = 1.0;
   static const _defaultStackedEventSpacing = 4.0;
-  static final _defaultPartDayEventMinimumDeltaForStacking =
-      Period(minutes: 15);
+  static final _defaultPartDayEventMinimumDeltaForStacking = Duration(minutes: 15);
   @Deprecated('This is now configurable via '
       '[TimetableThemeData.partDayEventMinimumDeltaForStacking].')
-  static Period get minStackOverlap =>
-      _defaultPartDayEventMinimumDeltaForStacking;
+  static Duration get minStackOverlap => _defaultPartDayEventMinimumDeltaForStacking;
 
-  final LocalDate date;
+  final DateTime date;
   final List<E> events;
   final EventBuilder<E> eventBuilder;
 
@@ -53,18 +51,12 @@ class DateEvents<E extends Event> extends StatelessWidget {
       delegate: _DayEventsLayoutDelegate(
         date: date,
         events: events,
-        minEventDuration: timetableTheme?.partDayEventMinimumDuration ??
-            _defaultMinEventDuration,
-        minEventHeight:
-            timetableTheme?.partDayEventMinimumHeight ?? _defaultMinEventHeight,
-        eventSpacing:
-            timetableTheme?.partDayEventSpacing ?? _defaultEventSpacing,
+        minEventDuration: timetableTheme?.partDayEventMinimumDuration ?? _defaultMinEventDuration,
+        minEventHeight: timetableTheme?.partDayEventMinimumHeight ?? _defaultMinEventHeight,
+        eventSpacing: timetableTheme?.partDayEventSpacing ?? _defaultEventSpacing,
         enableStacking: timetableTheme?.enablePartDayEventStacking ?? true,
-        minimumDeltaForStacking:
-            timetableTheme?.partDayEventMinimumDeltaForStacking ??
-                _defaultPartDayEventMinimumDeltaForStacking,
-        stackedEventSpacing: timetableTheme?.partDayStackedEventSpacing ??
-            _defaultStackedEventSpacing,
+        minimumDeltaForStacking: timetableTheme?.partDayEventMinimumDeltaForStacking ?? _defaultPartDayEventMinimumDeltaForStacking,
+        stackedEventSpacing: timetableTheme?.partDayStackedEventSpacing ?? _defaultStackedEventSpacing,
       ),
       children: [
         for (final event in events)
@@ -78,8 +70,7 @@ class DateEvents<E extends Event> extends StatelessWidget {
   }
 }
 
-class _DayEventsLayoutDelegate<E extends Event>
-    extends MultiChildLayoutDelegate {
+class _DayEventsLayoutDelegate<E extends Event> extends MultiChildLayoutDelegate {
   _DayEventsLayoutDelegate({
     @required this.date,
     @required this.events,
@@ -100,50 +91,42 @@ class _DayEventsLayoutDelegate<E extends Event>
 
   static const minWidth = 4.0;
 
-  final LocalDate date;
+  final DateTime date;
   final List<E> events;
 
-  final Period minEventDuration;
+  final Duration minEventDuration;
   final double minEventHeight;
   final double eventSpacing;
   final bool enableStacking;
-  final Period minimumDeltaForStacking;
+  final Duration minimumDeltaForStacking;
   final double stackedEventSpacing;
 
   @override
   void performLayout(Size size) {
     final positions = _calculatePositions(size.height);
 
-    double timeToY(LocalDateTime dateTime) {
-      if (dateTime.calendarDate < date) {
+    double timeToY(DateTime dateTime) {
+      if (dateTime < date) {
         return 0;
-      } else if (dateTime.calendarDate > date) {
+      } else if (dateTime > date) {
         return size.height;
       } else {
-        final progress = dateTime.clockTime.timeSinceMidnight.inMilliseconds /
-            TimeConstants.millisecondsPerDay;
+        final progress = dateTime.timeSinceMidnight.inMilliseconds / Duration.millisecondsPerDay;
         return lerpDouble(0, size.height, progress);
       }
     }
 
-    double periodToY(Period period) =>
-        timeToY(date.at(LocalTime.midnight) + period);
+    double DurationToY(Duration duration) => timeToY(date.at(TimeOfDay(hour: 0, minute: 0)) + duration);
 
     for (final event in events) {
       final position = positions.eventPositions[event];
-      final top = timeToY(event.start)
-          .coerceAtMost(size.height - periodToY(minEventDuration))
-          .coerceAtMost(size.height - minEventHeight);
-      final height = periodToY(_durationOn(event, date, size.height))
-          .clamp(0, size.height - top);
+      final top = timeToY(event.start).coerceAtMost(size.height - DurationToY(minEventDuration)).coerceAtMost(size.height - minEventHeight);
+      final height = DurationToY(_durationOn(event, date, size.height)).clamp(0, size.height - top);
 
-      final columnWidth = (size.width - eventSpacing) /
-          positions.groupColumnCounts[position.group];
+      final columnWidth = (size.width - eventSpacing) / positions.groupColumnCounts[position.group];
       final columnLeft = columnWidth * position.column;
       final left = columnLeft + position.index * stackedEventSpacing;
-      final width = columnWidth * position.columnSpan -
-          position.index * stackedEventSpacing -
-          eventSpacing;
+      final width = columnWidth * position.columnSpan - position.index * stackedEventSpacing - eventSpacing;
 
       final childSize = Size(width.coerceAtLeast(minWidth), height);
       layoutChild(event.id, BoxConstraints.tight(childSize));
@@ -160,12 +143,12 @@ class _DayEventsLayoutDelegate<E extends Event>
     final positions = _EventPositions();
 
     var currentGroup = <E>[];
-    var currentEnd = TimetableLocalDateTime.minIsoValue;
+    var currentEnd = DateTime(1);
     for (final event in events) {
       if (event.start >= currentEnd) {
         _endGroup(positions, currentGroup, height);
         currentGroup = [];
-        currentEnd = TimetableLocalDateTime.minIsoValue;
+        currentEnd = DateTime(1);
       }
 
       currentGroup.add(event);
@@ -176,14 +159,12 @@ class _DayEventsLayoutDelegate<E extends Event>
     return positions;
   }
 
-  void _endGroup(
-      _EventPositions positions, List<E> currentGroup, double height) {
+  void _endGroup(_EventPositions positions, List<E> currentGroup, double height) {
     if (currentGroup.isEmpty) {
       return;
     }
     if (currentGroup.length == 1) {
-      positions.eventPositions[currentGroup.first] =
-          _SingleEventPosition(positions.groupColumnCounts.length, 0, 0);
+      positions.eventPositions[currentGroup.first] = _SingleEventPosition(positions.groupColumnCounts.length, 0, 0);
       positions.groupColumnCounts.add(1);
       return;
     }
@@ -192,27 +173,21 @@ class _DayEventsLayoutDelegate<E extends Event>
     for (final event in currentGroup) {
       var minColumn = -1;
       var minIndex = 1 << 31;
-      var minEnd = TimetableLocalDateTime.minIsoValue;
+      var minEnd = DateTime(1);
       var columnFound = false;
       for (var columnIndex = 0; columnIndex < columns.length; columnIndex++) {
         final column = columns[columnIndex];
         final other = column.last;
 
         // No space in current column
-        if (!enableStacking && event.start < _actualEnd(other, height) ||
-            enableStacking &&
-                event.start < other.start + minimumDeltaForStacking) {
+        if (!enableStacking && event.start < _actualEnd(other, height) || enableStacking && event.start < other.start + minimumDeltaForStacking) {
           continue;
         }
 
-        final index = column
-                .where((e) => _actualEnd(e, height) >= event.start)
-                .map((e) => positions.eventPositions[e].index)
-                .max() ??
-            -1;
-        final previousEnd = column.fold(
-          TimetableLocalDateTime.maxIsoValue,
-          (max, e) => LocalDateTime.max(max, e.end),
+        final index = column.where((e) => _actualEnd(e, height) >= event.start).map((e) => positions.eventPositions[e].index).max() ?? -1;
+        final previousEnd = column.fold<DateTime>(
+          DateTime(10000),
+          (current, e) => (current.isAfter(e.end)) ? current : e.end,
         );
         // Further at the top and hence wider
         if (index < minIndex || (index == minIndex && previousEnd < minEnd)) {
@@ -225,14 +200,12 @@ class _DayEventsLayoutDelegate<E extends Event>
 
       // If no column fits
       if (!columnFound) {
-        positions.eventPositions[event] = _SingleEventPosition(
-            positions.groupColumnCounts.length, columns.length, 0);
+        positions.eventPositions[event] = _SingleEventPosition(positions.groupColumnCounts.length, columns.length, 0);
         columns.add([event]);
         continue;
       }
 
-      positions.eventPositions[event] = _SingleEventPosition(
-          positions.groupColumnCounts.length, minColumn, minIndex + 1);
+      positions.eventPositions[event] = _SingleEventPosition(positions.groupColumnCounts.length, minColumn, minIndex + 1);
       columns[minColumn].add(event);
     }
 
@@ -245,12 +218,8 @@ class _DayEventsLayoutDelegate<E extends Event>
 
       var columnSpan = 1;
       for (var i = position.column + 1; i < columns.length; i++) {
-        final hasOverlapInColumn = currentGroup
-            .where((e) => positions.eventPositions[e].column == i)
-            .where((e) =>
-                event.start < _actualEnd(e, height) &&
-                e.start < _actualEnd(event, height))
-            .isNotEmpty;
+        final hasOverlapInColumn =
+            currentGroup.where((e) => positions.eventPositions[e].column == i).where((e) => event.start < _actualEnd(e, height) && e.start < _actualEnd(event, height)).isNotEmpty;
         if (hasOverlapInColumn) {
           break;
         }
@@ -265,21 +234,17 @@ class _DayEventsLayoutDelegate<E extends Event>
     positions.groupColumnCounts.add(columns.length);
   }
 
-  LocalDateTime _actualEnd(E event, double height) {
-    final minDurationForHeight = Period(
-      milliseconds:
-          (minEventHeight / height * TimeConstants.millisecondsPerDay).toInt(),
+  DateTime _actualEnd(E event, double height) {
+    final minDurationForHeight = Duration(
+      milliseconds: (minEventHeight / height * Duration.millisecondsPerDay).toInt(),
     );
-    return event.end
-        .coerceAtLeast(event.start + minEventDuration)
-        .coerceAtLeast(event.start + minDurationForHeight);
+    return event.end.coerceAtLeast(event.start + minEventDuration).coerceAtLeast(event.start + minDurationForHeight);
   }
 
-  Period _durationOn(E event, LocalDate date, double height) {
+  Duration _durationOn(E event, DateTime date, double height) {
     final todayStart = event.start.coerceAtLeast(date.atMidnight());
-    final todayEnd =
-        _actualEnd(event, height).coerceAtMost(date.addDays(1).atMidnight());
-    return todayStart.periodUntil(todayEnd);
+    final todayEnd = _actualEnd(event, height).coerceAtMost(date.add(Duration(days: 1)).atMidnight());
+    return todayStart.difference(todayEnd);
   }
 
   @override

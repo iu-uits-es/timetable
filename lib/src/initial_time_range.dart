@@ -1,7 +1,8 @@
+import 'package:flutter/material.dart';
 import 'package:meta/meta.dart';
-import 'package:time_machine/time_machine.dart';
 
 import 'utils/vertical_zoom.dart';
+import 'utils/utils.dart';
 
 @immutable
 abstract class InitialTimeRange {
@@ -9,8 +10,8 @@ abstract class InitialTimeRange {
 
   const factory InitialTimeRange.zoom(double zoom) = _FactorInitialTimeRange;
   factory InitialTimeRange.range({
-    LocalTime startTime,
-    LocalTime endTime,
+    TimeOfDay startTime,
+    TimeOfDay endTime,
   }) = _RangeInitialTimeRange;
 
   InitialZoom asInitialZoom();
@@ -29,17 +30,16 @@ class _FactorInitialTimeRange extends InitialTimeRange {
 
 class _RangeInitialTimeRange extends InitialTimeRange {
   _RangeInitialTimeRange({
-    LocalTime startTime,
-    LocalTime endTime,
-  })  : startTime = startTime ?? LocalTime.minValue,
-        endTime = endTime ?? LocalTime.maxValue,
+    TimeOfDay startTime,
+    TimeOfDay endTime,
+  })  : startTime = startTime ?? TimeOfDay(hour: 0, minute: 0),
+        endTime = endTime ?? TimeOfDay(hour: 23, minute: 59),
         assert(startTime < endTime);
 
-  final LocalTime startTime;
-  final LocalTime endTime;
+  final TimeOfDay startTime;
+  final TimeOfDay endTime;
 
-  static double _timeToFraction(LocalTime time) =>
-      time.timeSinceMidnight.inNanoseconds / TimeConstants.nanosecondsPerDay;
+  static double _timeToFraction(TimeOfDay time) => time.sinceMidnight.inSeconds / Duration.secondsPerDay;
 
   @override
   InitialZoom asInitialZoom() => InitialZoom.range(

@@ -1,6 +1,5 @@
 import 'package:flutter/widgets.dart';
 import 'package:meta/meta.dart';
-import 'package:time_machine/time_machine.dart';
 
 import '../controller.dart';
 import '../event.dart';
@@ -16,7 +15,7 @@ class StreamedDateEvents<E extends Event> extends StatelessWidget {
         assert(controller != null),
         assert(eventBuilder != null);
 
-  final LocalDate date;
+  final DateTime date;
   final TimetableController<E> controller;
   final EventBuilder<E> eventBuilder;
 

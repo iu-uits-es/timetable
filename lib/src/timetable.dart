@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
-import 'package:time_machine/time_machine.dart';
-
 import 'all_day.dart';
 import 'content/timetable_content.dart';
 import 'controller.dart';
@@ -20,7 +18,7 @@ typedef AllDayEventBuilder<E extends Event> = Widget Function(
 /// [Timetable.dateHeaderBuilder].
 typedef HeaderWidgetBuilder = Widget Function(
   BuildContext context,
-  LocalDate date,
+  DateTime date,
 );
 
 /// Signature for [Timetable.onEventBackgroundTap].
@@ -28,7 +26,7 @@ typedef HeaderWidgetBuilder = Widget Function(
 /// `start` contains the time that the user tapped on. `isAllDay` indicates that
 /// the tap occurred in the all-day/nnheader area.
 typedef OnEventBackgroundTapCallback = void Function(
-  LocalDateTime start,
+  DateTime start,
   bool isAllDay,
 );
 

@@ -68,8 +68,8 @@ final myEventProvider = EventProvider.list([
     id: 0,
     title: 'My Event',
     color: Colors.blue,
-    start: LocalDate.today().at(LocalTime(13, 0, 0)),
-    end: LocalDate.today().at(LocalTime(15, 0, 0)),
+    start: DateTime.now().atMidnight().at(TimeOfDay(13, 0, 0)),
+    end: DateTime.now().atMidnight().at(TimeOfDay(15, 0, 0)),
   ),
 ]);
 ```
@@ -97,10 +97,10 @@ final myController = TimetableController(
   eventProvider: myEventProvider,
   // Optional parameters with their default values:
   initialTimeRange: InitialTimeRange.range(
-    startTime: LocalTime(8, 0, 0),
-    endTime: LocalTime(20, 0, 0),
+    startTime: TimeOfDay(8, 0, 0),
+    endTime: TimeOfDay(20, 0, 0),
   ),
-  initialDate: LocalDate.today(),
+  initialDate: DateTime.now().atMidnight(),
   visibleRange: VisibleRange.week(),
   firstDayOfWeek: DayOfWeek.monday,
 );
@@ -136,7 +136,7 @@ Timetable<BasicEvent>(
   controller: /* ... */,
   theme: TimetableThemeData(
     primaryColor: Colors.teal,
-    partDayEventMinimumDuration: Period(minutes: 30),
+    partDayEventMinimumDuration: Duration(minutes: 30),
     // ...and many more!
   ),
 ),

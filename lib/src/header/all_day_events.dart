@@ -3,9 +3,9 @@ import 'dart:ui';
 
 import 'package:black_hole_flutter/black_hole_flutter.dart';
 import 'package:dartx/dartx.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
-import 'package:time_machine/time_machine.dart' hide Offset;
 
 import '../all_day.dart';
 import '../controller.dart';
@@ -13,6 +13,7 @@ import '../event.dart';
 import '../theme.dart';
 import '../timetable.dart';
 import '../visible_range.dart';
+import '../utils/utils.dart';
 
 class AllDayEvents<E extends Event> extends StatelessWidget {
   const AllDayEvents({
@@ -33,28 +34,24 @@ class AllDayEvents<E extends Event> extends StatelessWidget {
     return ClipRect(
       child: LayoutBuilder(
         builder: (context, constraints) {
-          return ValueListenableBuilder<DateInterval>(
+          return ValueListenableBuilder<DateTimeRange>(
             valueListenable: controller.currentlyVisibleDatesListenable,
             builder: (_, visibleDates, __) {
               return StreamBuilder<Iterable<E>>(
-                stream: controller.eventProvider
-                    .getAllDayEventsIntersecting(visibleDates),
+                stream: controller.eventProvider.getAllDayEventsIntersecting(visibleDates),
                 builder: (_, snapshot) {
                   var events = snapshot.data ?? [];
                   // The StreamBuilder gets recycled and initially still has a list of
                   // old events.
-                  events =
-                      events.where((e) => e.intersectsInterval(visibleDates));
+                  events = events.where((e) => e.intersectsInterval(visibleDates));
 
                   return ValueListenableBuilder(
-                    valueListenable:
-                        controller.scrollControllers.pageListenable,
+                    valueListenable: controller.scrollControllers.pageListenable,
                     builder: (context, page, __) => GestureDetector(
                       behavior: HitTestBehavior.translucent,
                       onTapUp: onEventBackgroundTap != null
                           ? (details) {
-                              _callOnAllDayEventBackgroundTap(
-                                  details, page, constraints);
+                              _callOnAllDayEventBackgroundTap(details, page, constraints);
                             }
                           : null,
                       child: _buildEventLayout(context, events, page),
@@ -74,9 +71,8 @@ class AllDayEvents<E extends Event> extends StatelessWidget {
     double page,
     BoxConstraints constraints,
   ) {
-    final tappedCell = details.localPosition.dx /
-        (constraints.maxWidth / controller.visibleRange.visibleDays);
-    final date = LocalDate.fromEpochDay((page + tappedCell).floor());
+    final tappedCell = details.localPosition.dx / (constraints.maxWidth / controller.visibleRange.visibleDays);
+    final date = DateTime(1970).add(Duration(days: (page + tappedCell).floor()));
     onEventBackgroundTap(date.atMidnight(), true);
   }
 
@@ -102,8 +98,8 @@ class AllDayEvents<E extends Event> extends StatelessWidget {
 
   Widget _buildEvent(BuildContext context, E event, double page) {
     final visibleDays = controller.visibleRange.visibleDays;
-    final eventStartPage = event.start.calendarDate.epochDay;
-    final eventEndPage = (event.endDateInclusive + Period(days: 1)).epochDay;
+    final eventStartPage = event.start.epochDay;
+    final eventEndPage = (event.endDateInclusive + Duration(days: 1)).epochDay;
     final hiddenStartDays = (page - eventStartPage).coerceAtLeast(0);
     return allDayEventBuilder(
       context,
@@ -116,8 +112,7 @@ class AllDayEvents<E extends Event> extends StatelessWidget {
   }
 }
 
-class _EventParentDataWidget<E extends Event>
-    extends ParentDataWidget<_EventParentData<E>> {
+class _EventParentDataWidget<E extends Event> extends ParentDataWidget<_EventParentData<E>> {
   const _EventParentDataWidget({
     Key key,
     @required this.event,
@@ -161,7 +156,7 @@ class _EventsWidget<E extends Event> extends MultiChildRenderObjectWidget {
   static const _defaultEventHeight = 24.0;
 
   final VisibleRange visibleRange;
-  final DateInterval currentlyVisibleDates;
+  final DateTimeRange currentlyVisibleDates;
   final double page;
 
   @override
@@ -170,8 +165,7 @@ class _EventsWidget<E extends Event> extends MultiChildRenderObjectWidget {
       visibleRange: visibleRange,
       currentlyVisibleDates: currentlyVisibleDates,
       page: page,
-      eventHeight:
-          context.timetableTheme?.allDayEventHeight ?? _defaultEventHeight,
+      eventHeight: context.timetableTheme?.allDayEventHeight ?? _defaultEventHeight,
     );
   }
 
@@ -181,23 +175,18 @@ class _EventsWidget<E extends Event> extends MultiChildRenderObjectWidget {
       ..visibleRange = visibleRange
       ..currentlyVisibleDates = currentlyVisibleDates
       ..page = page
-      ..eventHeight =
-          context.timetableTheme?.allDayEventHeight ?? _defaultEventHeight;
+      ..eventHeight = context.timetableTheme?.allDayEventHeight ?? _defaultEventHeight;
   }
 }
 
-class _EventParentData<E extends Event>
-    extends ContainerBoxParentData<RenderBox> {
+class _EventParentData<E extends Event> extends ContainerBoxParentData<RenderBox> {
   E event;
 }
 
-class _EventsLayout<E extends Event> extends RenderBox
-    with
-        ContainerRenderObjectMixin<RenderBox, _EventParentData<E>>,
-        RenderBoxContainerDefaultsMixin<RenderBox, _EventParentData<E>> {
+class _EventsLayout<E extends Event> extends RenderBox with ContainerRenderObjectMixin<RenderBox, _EventParentData<E>>, RenderBoxContainerDefaultsMixin<RenderBox, _EventParentData<E>> {
   _EventsLayout({
     @required VisibleRange visibleRange,
-    @required DateInterval currentlyVisibleDates,
+    @required DateTimeRange currentlyVisibleDates,
     @required double page,
     @required double eventHeight,
   })  : assert(visibleRange != null),
@@ -223,11 +212,11 @@ class _EventsLayout<E extends Event> extends RenderBox
     markNeedsLayout();
   }
 
-  DateInterval _currentlyVisibleDates;
+  DateTimeRange _currentlyVisibleDates;
 
-  DateInterval get currentlyVisibleDates => _currentlyVisibleDates;
+  DateTimeRange get currentlyVisibleDates => _currentlyVisibleDates;
 
-  set currentlyVisibleDates(DateInterval value) {
+  set currentlyVisibleDates(DateTimeRange value) {
     assert(value != null);
     if (_currentlyVisibleDates == value) {
       return;
@@ -298,16 +287,13 @@ class _EventsLayout<E extends Event> extends RenderBox
 
   double _parallelEventCount() {
     int parallelEventsFrom(int page) {
-      final startDate = LocalDate.fromEpochDay(page);
-      final interval = DateInterval(
-        startDate,
-        startDate + Period(days: visibleRange.visibleDays - 1),
+      final startDate = DateTime(1970).add(Duration(days: page));
+      final interval = DateTimeRange(
+        start: startDate,
+        end: startDate + Duration(days: visibleRange.visibleDays - 1),
       );
 
-      final maxEventPosition = _yPositions.entries
-          .where((e) => e.key.intersectsInterval(interval))
-          .map((e) => e.value)
-          .max();
+      final maxEventPosition = _yPositions.entries.where((e) => e.key.intersectsInterval(interval)).map((e) => e.value).max();
       return maxEventPosition != null ? maxEventPosition + 1 : 0;
     }
 
@@ -319,12 +305,10 @@ class _EventsLayout<E extends Event> extends RenderBox
   }
 
   @override
-  double computeMinIntrinsicHeight(double width) =>
-      _parallelEventCount() * eventHeight;
+  double computeMinIntrinsicHeight(double width) => _parallelEventCount() * eventHeight;
 
   @override
-  double computeMaxIntrinsicHeight(double width) =>
-      _parallelEventCount() * eventHeight;
+  double computeMaxIntrinsicHeight(double width) => _parallelEventCount() * eventHeight;
 
   final _yPositions = <E, int>{};
 
@@ -346,15 +330,14 @@ class _EventsLayout<E extends Event> extends RenderBox
     // Remove old events.
     _yPositions.removeWhere((e, _) {
       final distance = math.max(
-        e.start.calendarDate.periodSince(currentlyVisibleDates.end).days,
-        e.endDateInclusive.periodUntil(currentlyVisibleDates.start).days,
+        e.start.difference(currentlyVisibleDates.end).inDays,
+        e.endDateInclusive.difference(currentlyVisibleDates.start).inDays,
       );
       return distance >= visibleRange.visibleDays;
     });
 
     // Insert new events.
-    final sortedEvents =
-        events.whereNot(_yPositions.containsKey).sortedByStartLength();
+    final sortedEvents = events.whereNot(_yPositions.containsKey).sortedByStartLength();
 
     Iterable<E> eventsWithPosition(int y) {
       return _yPositions.entries.where((e) => e.value == y).map((e) => e.key);
@@ -391,11 +374,10 @@ class _EventsLayout<E extends Event> extends RenderBox
     for (final child in children) {
       final event = child.data.event;
 
-      final startDate = event.start.calendarDate;
+      final startDate = event.start;
       final left = ((startDate.epochDay - page) * dateWidth).coerceAtLeast(0);
       final endDate = event.endDateInclusive;
-      final right =
-          ((endDate.epochDay + 1 - page) * dateWidth).coerceAtMost(size.width);
+      final right = ((endDate.epochDay + 1 - page) * dateWidth).coerceAtMost(size.width);
 
       child.layout(BoxConstraints.tightFor(
         width: right - left,
@@ -418,8 +400,7 @@ class _EventsLayout<E extends Event> extends RenderBox
       return;
     }
 
-    context.pushClipRect(
-        needsCompositing, offset, Offset.zero & size, defaultPaint);
+    context.pushClipRect(needsCompositing, offset, Offset.zero & size, defaultPaint);
   }
 }
 

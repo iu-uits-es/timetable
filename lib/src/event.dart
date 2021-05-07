@@ -1,9 +1,8 @@
 import 'dart:ui';
 
 import 'package:dartx/dartx.dart';
+import 'package:flutter/material.dart';
 import 'package:meta/meta.dart';
-import 'package:time_machine/time_machine.dart';
-
 import 'basic.dart';
 
 /// The base class of all events.
@@ -24,20 +23,17 @@ abstract class Event {
   final Object id;
 
   /// Start of the event.
-  final LocalDateTime start;
+  final DateTime start;
 
   // End of the event; exclusive.
-  final LocalDateTime end;
+  final DateTime end;
 
-  bool get isAllDay => start.periodUntil(end).normalize().days >= 1;
+  bool get isAllDay => start.difference(end).inDays >= 1;
   bool get isPartDay => !isAllDay;
 
   @override
   bool operator ==(dynamic other) {
-    return runtimeType == other.runtimeType &&
-        id == other.id &&
-        start == other.start &&
-        end == other.end;
+    return runtimeType == other.runtimeType && id == other.id && start == other.start && end == other.end;
   }
 
   @override
@@ -48,35 +44,29 @@ abstract class Event {
 }
 
 extension TimetableEvent on Event {
-  bool intersectsDate(LocalDate date) =>
-      intersectsInterval(DateInterval(date, date));
+  bool intersectsDate(DateTime date) => date.between(start, end);
 
-  bool intersectsInterval(DateInterval interval) {
-    return start.calendarDate <= interval.end &&
-        endDateInclusive >= interval.start;
+  bool intersectsInterval(DateTimeRange interval) {
+    return start <= interval.end && endDateInclusive >= interval.start;
   }
 
-  LocalDate get endDateInclusive {
-    if (start.calendarDate == end.calendarDate) {
-      return end.calendarDate;
+  DateTime get endDateInclusive {
+    if (start == end) {
+      return end;
     }
 
-    return (end - Period(nanoseconds: 1)).calendarDate;
+    return end - Duration(microseconds: 1);
   }
 
-  DateInterval get intersectingDates =>
-      DateInterval(start.calendarDate, endDateInclusive);
+  DateTimeRange get intersectingDates => DateTimeRange(start: start, end: endDateInclusive);
 }
 
 extension TimetableEventIterable<E extends Event> on Iterable<E> {
   Iterable<E> get allDayEvents => where((e) => e.isAllDay);
   Iterable<E> get partDayEvents => where((e) => e.isPartDay);
 
-  Iterable<E> intersectingInterval(DateInterval interval) =>
-      where((e) => e.intersectsInterval(interval));
-  Iterable<E> intersectingDate(LocalDate date) =>
-      where((e) => e.intersectsDate(date));
+  Iterable<E> intersectingInterval(DateTimeRange interval) => where((e) => e.intersectsInterval(interval));
+  Iterable<E> intersectingDate(DateTime date) => where((e) => e.intersectsDate(date));
 
-  List<E> sortedByStartLength() =>
-      sortedBy((e) => e.start).thenByDescending((e) => e.end);
+  List<E> sortedByStartLength() => sortedBy((e) => e.start).thenByDescending((e) => e.end);
 }

@@ -1,9 +1,8 @@
 import 'package:flutter/physics.dart';
 import 'package:meta/meta.dart';
-import 'package:time_machine/time_machine.dart';
-
 import 'controller.dart';
 import 'timetable.dart';
+import 'utils/utils.dart';
 
 abstract class VisibleRange {
   const VisibleRange({
@@ -30,22 +29,21 @@ abstract class VisibleRange {
 
   final int visibleDays;
 
-  /// Convenience method of [getTargetPageForFocus] taking a [LocalDate].
-  double getTargetPageForFocusDate(
-      LocalDate focusDate, DayOfWeek firstDayOfWeek) {
+  /// Convenience method of [getTargetPageForFocus] taking a [DateTime].
+  double getTargetPageForFocusDate(DateTime focusDate, int firstDayOfWeek) {
     assert(focusDate != null);
     return getTargetPageForFocus(focusDate.epochDay.toDouble(), firstDayOfWeek);
   }
 
   /// Gets the page to align to the viewport's left side based on the
   /// [focusPage] to show.
-  double getTargetPageForFocus(double focusPage, DayOfWeek firstDayOfWeek);
+  double getTargetPageForFocus(double focusPage, int firstDayOfWeek);
 
   /// Gets the page to align to the viewport's left side based on the
   /// [currentPage] in that position.
   double getTargetPageForCurrent(
     double currentPage,
-    DayOfWeek firstDayOfWeek, {
+    int firstDayOfWeek, {
     double velocity = 0,
     Tolerance tolerance = Tolerance.defaultTolerance,
   });
@@ -63,13 +61,12 @@ class DaysVisibleRange extends VisibleRange {
   const DaysVisibleRange(int count) : super(visibleDays: count);
 
   @override
-  double getTargetPageForFocus(double focusPage, DayOfWeek firstDayOfWeek) =>
-      getTargetPageForCurrent(focusPage, firstDayOfWeek);
+  double getTargetPageForFocus(double focusPage, int firstDayOfWeek) => getTargetPageForCurrent(focusPage, firstDayOfWeek);
 
   @override
   double getTargetPageForCurrent(
     double focusPage,
-    DayOfWeek firstDayOfWeek, {
+    int firstDayOfWeek, {
     double velocity = 0,
     Tolerance tolerance = Tolerance.defaultTolerance,
   }) {
@@ -88,12 +85,13 @@ class DaysVisibleRange extends VisibleRange {
 /// You can configure the first day of a week via
 /// [TimetableController.firstDayOfWeek].
 class WeekVisibleRange extends VisibleRange {
-  const WeekVisibleRange() : super(visibleDays: TimeConstants.daysPerWeek);
+  static const daysPerWeek = 7;
+  const WeekVisibleRange() : super(visibleDays: daysPerWeek);
 
   @override
   double getTargetPageForFocus(
     double focusPage,
-    DayOfWeek firstDayOfWeek, {
+    int firstDayOfWeek, {
     double velocity = 0,
     Tolerance tolerance = Tolerance.defaultTolerance,
   }) {
@@ -102,25 +100,23 @@ class WeekVisibleRange extends VisibleRange {
     assert(velocity != null);
     assert(tolerance != null);
 
-    final epochWeekDayOffset =
-        firstDayOfWeek.value - LocalDate.fromEpochDay(0).dayOfWeek.value;
-    final focusWeek =
-        (focusPage - epochWeekDayOffset) / TimeConstants.daysPerWeek;
+    final epochWeekDayOffset = firstDayOfWeek - DateTime(1970).weekday;
+    final focusWeek = (focusPage - epochWeekDayOffset) / daysPerWeek;
 
     final velocityAddition = getDefaultVelocityAddition(velocity, tolerance);
     final targetWeek = (focusWeek + velocityAddition).floorToDouble();
-    return targetWeek * TimeConstants.daysPerWeek + epochWeekDayOffset;
+    return targetWeek * daysPerWeek + epochWeekDayOffset;
   }
 
   @override
   double getTargetPageForCurrent(
     double focusPage,
-    DayOfWeek firstDayOfWeek, {
+    int firstDayOfWeek, {
     double velocity = 0,
     Tolerance tolerance = Tolerance.defaultTolerance,
   }) {
     return getTargetPageForFocus(
-      focusPage + TimeConstants.daysPerWeek / 2,
+      focusPage + daysPerWeek / 2,
       firstDayOfWeek,
       velocity: velocity,
       tolerance: tolerance,

@@ -1,5 +1,4 @@
 import 'package:flutter/widgets.dart';
-import 'package:time_machine/time_machine.dart' hide Offset;
 
 import '../controller.dart';
 import '../event.dart';
@@ -36,7 +35,7 @@ class MultiDateBackgroundPainter<E extends Event> extends CustomPainter {
   }
 
   void _drawHourDividers(Canvas canvas, Size size) {
-    final heightPerHour = size.height / TimeConstants.hoursPerDay;
+    final heightPerHour = size.height / Duration.hoursPerDay;
     for (final h in innerDateHours) {
       final y = h * heightPerHour;
       canvas.drawLine(Offset(-8, y), Offset(size.width, y), dividerPaint);

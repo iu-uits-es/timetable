@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:meta/meta.dart';
-import 'package:time_machine/time_machine.dart';
-import 'package:time_machine/time_machine_text_patterns.dart';
-
 import 'timetable.dart';
 
 /// Defines visual properties for [Timetable] and related widgets.
@@ -58,11 +56,11 @@ class TimetableThemeData {
   @experimental
   final double totalDateIndicatorHeight;
 
-  /// [LocalDatePattern] for formatting the day-of-week.
+  /// [DateTimePattern] for formatting the day-of-week.
   ///
   /// See also:
   /// - [dateIndicatorTextStyle] for a list of possible states.
-  final MaterialStateProperty<LocalDatePattern> weekDayIndicatorPattern;
+  final MaterialStateProperty<DateFormat> weekDayIndicatorPattern;
 
   /// [Decoration] to show around the day-of-week-indicator.
   ///
@@ -76,11 +74,11 @@ class TimetableThemeData {
   /// - [dateIndicatorTextStyle] for a list of possible states.
   final MaterialStateProperty<TextStyle> weekDayIndicatorTextStyle;
 
-  /// [LocalDatePattern] for formatting the date (of month).
+  /// [DateTimePattern] for formatting the date (of month).
   ///
   /// See also:
   /// - [dateIndicatorTextStyle] for a list of possible states.
-  final MaterialStateProperty<LocalDatePattern> dateIndicatorPattern;
+  final MaterialStateProperty<DateFormat> dateIndicatorPattern;
 
   /// [Decoration] to show around the date (of month) indicator.
   ///
@@ -124,10 +122,10 @@ class TimetableThemeData {
   /// Defaults to 64.
   final double maximumHourHeight;
 
-  /// Minimum [Period] to size a part-day event.
+  /// Minimum [Duration] to size a part-day event.
   ///
   /// Can be used together with [partDayEventMinimumHeight].
-  final Period partDayEventMinimumDuration;
+  final Duration partDayEventMinimumDuration;
 
   /// Minimum height to size a part-day event.
   ///
@@ -157,7 +155,7 @@ class TimetableThemeData {
   /// See also:
   /// - [enablePartDayEventStacking], which can disable the stacking behavior
   ///   completely.
-  final Period partDayEventMinimumDeltaForStacking;
+  final Duration partDayEventMinimumDeltaForStacking;
 
   /// Horizontal space between two parallel events stacked on top of each other.
   final double partDayStackedEventSpacing;

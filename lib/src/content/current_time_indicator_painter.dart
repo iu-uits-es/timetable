@@ -1,11 +1,10 @@
 import 'dart:ui';
 
-import 'package:dartx/dartx.dart';
 import 'package:flutter/material.dart';
-import 'package:time_machine/time_machine.dart' hide Offset;
 
 import '../controller.dart';
 import '../event.dart';
+import '../utils/utils.dart';
 
 class CurrentTimeIndicatorPainter<E extends Event> extends CustomPainter {
   CurrentTimeIndicatorPainter({
@@ -32,7 +31,7 @@ class CurrentTimeIndicatorPainter<E extends Event> extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final dateWidth = size.width / controller.visibleRange.visibleDays;
 
-    final temporalOffset = LocalDate.today().epochDay - controller.scrollControllers.page;
+    final temporalOffset = DateTime.now().atMidnight().epochDay - controller.scrollControllers.page;
     final left = temporalOffset * dateWidth;
     final right = left + dateWidth;
 
@@ -41,11 +40,11 @@ class CurrentTimeIndicatorPainter<E extends Event> extends CustomPainter {
       return;
     }
 
-    final actualLeft = left.coerceAtLeast(0);
-    final actualRight = right.coerceAtMost(size.width);
+    final actualLeft = left < 0 ? 0.0 : left;
+    final actualRight = right > size.width ? size.width : right;
 
-    final time = LocalTime.currentClockTime().timeSinceMidnight.inSeconds;
-    final y = (time / TimeConstants.secondsPerDay) * size.height;
+    final time = TimeOfDay.now().sinceMidnight.inSeconds;
+    final y = (time / Duration.secondsPerDay) * size.height;
 
     final radius = lerpDouble(circleRadius, 0, dateWidth != 0 ? (actualLeft - left) / dateWidth : 0);
     canvas

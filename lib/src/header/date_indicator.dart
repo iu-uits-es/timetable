@@ -1,7 +1,6 @@
 import 'package:black_hole_flutter/black_hole_flutter.dart';
 import 'package:flutter/material.dart';
-import 'package:time_machine/time_machine.dart';
-import 'package:time_machine/time_machine_text_patterns.dart';
+import 'package:intl/intl.dart';
 
 import '../theme.dart';
 import '../utils/utils.dart';
@@ -9,7 +8,7 @@ import '../utils/utils.dart';
 class DateIndicator extends StatelessWidget {
   const DateIndicator(this.date, {Key key}) : super(key: key);
 
-  final LocalDate date;
+  final DateTime date;
 
   @override
   Widget build(BuildContext context) {
@@ -17,20 +16,16 @@ class DateIndicator extends StatelessWidget {
     final timetableTheme = context.timetableTheme;
 
     final states = statesFor(date);
-    final pattern = timetableTheme?.dateIndicatorPattern?.resolve(states) ??
-        LocalDatePattern.createWithCurrentCulture('%d');
+    final pattern = timetableTheme?.dateIndicatorPattern?.resolve(states) ?? DateFormat('d');
     final primaryColor = timetableTheme?.primaryColor ?? theme.primaryColor;
-    final decoration =
-        timetableTheme?.dateIndicatorDecoration?.resolve(states) ??
-            BoxDecoration(
-              shape: BoxShape.circle,
-              color: date.isToday ? primaryColor : Colors.transparent,
-            );
+    final decoration = timetableTheme?.dateIndicatorDecoration?.resolve(states) ??
+        BoxDecoration(
+          shape: BoxShape.circle,
+          color: date.isToday ? primaryColor : Colors.transparent,
+        );
     final textStyle = timetableTheme?.dateIndicatorTextStyle?.resolve(states) ??
         TextStyle(
-          color: date.isToday
-              ? primaryColor.highEmphasisOnColor
-              : theme.highEmphasisOnBackground,
+          color: date.isToday ? primaryColor.highEmphasisOnColor : theme.highEmphasisOnBackground,
         );
 
     return DecoratedBox(
@@ -42,9 +37,9 @@ class DateIndicator extends StatelessWidget {
     );
   }
 
-  static Set<MaterialState> statesFor(LocalDate date) {
+  static Set<MaterialState> statesFor(DateTime date) {
     return {
-      if (date < LocalDate.today()) MaterialState.disabled,
+      if (date.isBefore(DateTime.now().atMidnight())) MaterialState.disabled,
       if (date.isToday) MaterialState.selected,
     };
   }

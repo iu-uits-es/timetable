@@ -1,8 +1,6 @@
 import 'package:black_hole_flutter/black_hole_flutter.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:time_machine/time_machine.dart' hide Offset;
-
 import 'all_day.dart';
 import 'event.dart';
 
@@ -15,8 +13,8 @@ class BasicEvent extends Event {
     @required Object id,
     @required this.title,
     @required this.color,
-    @required LocalDateTime start,
-    @required LocalDateTime end,
+    @required DateTime start,
+    @required DateTime end,
   })  : assert(title != null),
         super(id: id, start: start, end: end);
 
