@@ -16,7 +16,7 @@ dependencies:
   dartx: ^0.7.1
   meta: ^1.1.8
   pedantic: ^1.8.0+1
-  rxdart: ^0.24.0
+  rxdart: ^0.27.0
   time_machine: 0.9.16
 
 dev_dependencies:
